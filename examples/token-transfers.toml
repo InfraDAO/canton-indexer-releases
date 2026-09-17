@@ -1,0 +1,36 @@
+# token-transfers — "every Amulet transfer we can see".
+#
+# One document per AmuletRules_Transfer exercise. The choice is the single
+# entry point for Amulet value movement — rewards claimed, wallet transfers,
+# merges, splits — which is why the argument is a `transfer` record (sender,
+# provider, outputs, inputs) rather than a flat from/to pair: a transfer
+# consumes N holdings and creates M (testdata/pqs/transfer-exercise.json).
+#
+# So "receiver" is a list: `outputs` is an array of {receiver, amount, lock},
+# empty when everything came back as sender change. The unspent remainder is
+# `senderChangeAmount`, and `createdAmulets`/`senderChangeAmulet` name the
+# holdings the transfer minted. Fan-out to one row per (sender, receiver) is
+# the consumer's unnest.
+#
+# `.argument.transfer.sender != null` drops an exercise whose argument subtree
+# privacy hid. PQS only has transfers our party is a stakeholder of.
+
+name = "token_transfers"
+source = "exercises"
+version = 1
+where = '.template_fqn == "splice-amulet:Splice.AmuletRules:AmuletRules" and .choice == "AmuletRules_Transfer" and .argument.transfer.sender != null'
+
+[select]
+sender = 'party(.argument.transfer.sender)'
+provider = 'party(.argument.transfer.provider)'
+receivers = '[.argument.transfer.outputs[]? | .receiver]'
+output_amounts = '[.argument.transfer.outputs[]? | .amount]'
+inputs = '[.argument.transfer.inputs[]? | .value // .]'
+input_amount = 'decimal(.result.summary.inputAmuletAmount)'
+sender_change_amount = 'decimal(.result.summary.senderChangeAmount)'
+holding_fees = 'decimal(.result.summary.holdingFees)'
+amulet_price = 'decimal(.result.summary.amuletPrice)'
+created_amulets = '[.result.createdAmulets[]? | (.value? // .)]'
+sender_change_amulet = '.result.senderChangeAmulet'
+round = 'int(.result.round.number)'
+at = 'time(.exercised_effective_at)'

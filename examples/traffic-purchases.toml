@@ -1,0 +1,27 @@
+# traffic-purchases — "who bought more traffic balance?"
+#
+# One document per AmuletRules_BuyMemberTraffic exercise: the member topped up,
+# the bytes bought and the Amulet burned to pay for it. Ranking is the
+# consumer's:
+#   select member, sum(traffic) t from <table> group by 1 order by t desc;
+#
+# `.argument.memberId != null` drops records whose argument subtree privacy
+# hid. PQS holds only what our party is a stakeholder of.
+
+name = "traffic_purchases"
+source = "exercises"
+version = 1
+where = '.template_fqn == "splice-amulet:Splice.AmuletRules:AmuletRules" and .choice == "AmuletRules_BuyMemberTraffic" and .argument.memberId != null'
+
+[select]
+member = '.argument.memberId'
+provider = 'party(.argument.provider)'
+traffic = 'int(.argument.trafficAmount)'
+synchronizer = '.argument.synchronizerId'
+migration_id = 'int(.argument.migrationId)'
+amulet_paid = 'decimal(.result.amuletPaid)'
+amulet_price = 'decimal(.result.summary.amuletPrice)'
+round = 'int(.result.round.number)'
+traffic_state = '.result.purchasedTraffic'
+inputs = '[.argument.inputs[]? | .value // .]'
+at = 'time(.exercised_effective_at)'

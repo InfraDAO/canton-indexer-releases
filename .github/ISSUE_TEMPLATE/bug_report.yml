@@ -1,0 +1,59 @@
+name: Bug report
+description: Report a problem with canton-indexer
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `canton-indexer --version`
+      placeholder: canton-indexer 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: OS / architecture
+      options:
+        - macOS ARM (aarch64-darwin)
+        - macOS Intel (x86_64-darwin)
+        - Linux x86_64 (x86_64-linux)
+        - Linux ARM64 (aarch64-linux)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Install method
+      options:
+        - Homebrew
+        - Release binary
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: manifest
+    attributes:
+      label: Filter manifest
+      render: toml
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: stderr output
+      render: shell
+    validations:
+      required: false

@@ -1,0 +1,24 @@
+# holding-lifecycle — "every birth and every spend of our holdings, as a log."
+#
+# The same holdings as my-balance.toml, without the `lock` clause and selected
+# for what moved rather than what is: a create when a holding appears and an
+# archive when it is spent. Whether those two lines stay two is the sink's
+# (docs/engine.md).
+#
+# `event` and `at_offset` are fields the query adds to the row. `event` is the
+# only place a line can say which event it is; `at_offset` is that event's own
+# position, where `.created_at_offset` would give the create's on both lines.
+#
+# PQS holds only what our party is a stakeholder of.
+
+name = "holding_lifecycle"
+source = "lifecycle"
+version = 1
+where = '.template_fqn == "splice-api-token-holding-v1:Splice.Api.Token.HoldingV1:Holding" and .payload_type == "interface" and .payload.owner == "infradao-devnet-1::12205b62a09e83b520e0a18097871eaaae3dac33069109965f2e217f679661e1d0c1"'
+
+[select]
+event = '.event_type'
+at_offset = 'int(.offset)'
+owner = 'party(.payload.owner)'
+instrument = '.payload.instrumentId.id'
+amount = 'decimal(.payload.amount)'

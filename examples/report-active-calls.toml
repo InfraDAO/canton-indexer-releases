@@ -1,0 +1,18 @@
+# report-active-calls — "how many times was this choice called?"
+#
+# One line per ValidatorLicense_ReportActive exercise, the hourly heartbeat
+# every validator sends; validator-licenses.toml is the lifecycle view of the
+# same activity. One selected column: the count is the consumer's `count(*)`,
+# or `count(*) group by date_trunc(...)` for a call rate.
+#
+# `.template_fqn` and `.choice` name the same thing `.choice_fqn` does.
+#
+# Only exercises our party witnesses are in PQS.
+
+name = "report_active_calls"
+source = "exercises"
+version = 1
+where = '.template_fqn == "splice-amulet:Splice.ValidatorLicense:ValidatorLicense" and .choice == "ValidatorLicense_ReportActive"'
+
+[select]
+at = 'time(.exercised_effective_at)'

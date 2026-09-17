@@ -1,0 +1,26 @@
+# my-traffic-balance — "how much synchronizer traffic has our validator bought,
+# and what did it cost?"
+#
+# The DSO records a running per-member total on MemberTraffic: totalPurchased
+# (bytes), amuletSpent, usdSpent, numPurchases, keyed by (memberId,
+# synchronizerId, migrationId). The live view is `_archived_at_offset is null`.
+#
+# Not Splice.Wallet.TopUpState:ValidatorTopUpState, the other candidate: its
+# payload is scheduler bookkeeping for the wallet's auto-top-up loop and
+# carries no balance. Verified on the live store.
+#
+# memberId is the participant id (PAR::<party>), not the party id.
+
+name = "my_traffic_balance"
+source = "lifecycle"
+version = 1
+where = '.template_fqn == "splice-amulet:Splice.DecentralizedSynchronizer:MemberTraffic" and .payload.memberId == "PAR::infradao-devnet-1::12205b62a09e83b520e0a18097871eaaae3dac33069109965f2e217f679661e1d0c1"'
+
+[select]
+member = '.payload.memberId'
+synchronizer = '.payload.synchronizerId'
+migration_id = 'int(.payload.migrationId)'
+total_purchased = 'int(.payload.totalPurchased)'
+purchases = 'int(.payload.numPurchases)'
+amulet_spent = 'decimal(.payload.amuletSpent)'
+usd_spent = 'decimal(.payload.usdSpent)'

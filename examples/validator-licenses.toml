@@ -1,0 +1,36 @@
+# validator-licenses — "every ValidatorLicense contract, as rows a consumer
+# folds to one per validator".
+#
+# The successor idiom: every liveness heartbeat exercises
+# ValidatorLicense_ReportActive, which archives the licence and creates its
+# successor in the same transaction. One validator is a chain of contracts —
+# 169 of them for ours on the live store — and every line of it is emitted.
+#
+# The chain is the consumer's query, one line of SQL:
+#
+#   live licences          select * from <table> where _archived_at_offset is null
+#   one row per validator  select distinct on (validator) * from <table>
+#                            order by validator, _offset desc
+#
+# The archive's node sorts before the successor's create, so the newest line
+# for a validator is its live successor whenever one exists (verified on all
+# 171 heartbeats of the live store), and `last_active_at` on that row is the
+# liveness answer. crates/canton-filter/tests/examples/ runs both folds.
+#
+# Chosen over the OpenMiningRound lifecycle because our PQS has zero
+# Splice.Round contracts: rounds are DSO-scoped and our validator is not a
+# stakeholder.
+
+name = "validator_licenses"
+source = "lifecycle"
+version = 1
+where = '.template_fqn == "splice-amulet:Splice.ValidatorLicense:ValidatorLicense"'
+
+[select]
+validator = 'party(.payload.validator)'
+sponsor = 'party(.payload.sponsor)'
+dso = 'party(.payload.dso)'
+version = '.payload.metadata.version'
+contact_point = '.payload.metadata.contactPoint'
+last_active_at = 'time(.payload.lastActiveAt)'
+metadata_updated_at = 'time(.payload.metadata.lastUpdatedAt)'
