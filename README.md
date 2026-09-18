@@ -1,45 +1,56 @@
-# canton-indexer
+# cinder
 
-Indexing and query engine for [Canton Network](https://www.canton.network/).
-It reads a validator's Participant Query Store (PQS), applies declarative
-filter manifests (TOML, with a jq-style `where`/`select`), materializes the
-matching ledger records into application-ready documents, and serves them
-through a document-query HTTP API.
+Developer CLI for [Canton Network](https://www.canton.network/). It reads a
+validator's Participant Query Store (PQS), applies declarative filter
+manifests (TOML, with a jq-style `where`/`select`), and writes the matching
+ledger records as application-ready documents — the tool for authoring
+filters and exploring what a validator holds.
 
-This repository is the public home of the `canton-indexer` binary: releases,
-issues and example filters. The source lives in a private repository.
+This repository is the public home of the `cinder` binary: releases, issues
+and example filters. The source lives in a private repository.
 
 ## Install
 
 ### Homebrew (macOS, Linux)
 
 ```sh
-brew install infradao/tap/canton-indexer
+brew install infradao/tap/cinder
 ```
 
 ### Manual download
 
 Grab the binary for your platform from the [Releases page](../../releases):
 
-| Platform      | Asset                            |
-|---------------|-----------------------------------|
-| macOS ARM     | `canton-indexer-aarch64-darwin`   |
-| macOS Intel   | `canton-indexer-x86_64-darwin`    |
-| Linux x86_64  | `canton-indexer-x86_64-linux`     |
-| Linux ARM64   | `canton-indexer-aarch64-linux`    |
+| Platform      | Asset                    |
+|---------------|--------------------------|
+| macOS ARM     | `cinder-aarch64-darwin`  |
+| macOS Intel   | `cinder-x86_64-darwin`   |
+| Linux x86_64  | `cinder-x86_64-linux`    |
+| Linux ARM64   | `cinder-aarch64-linux`   |
 
 Linux builds are static (musl). Each release also publishes a `SHA256SUMS`
 file — verify before running:
 
 ```sh
 shasum -a 256 -c SHA256SUMS --ignore-missing
-chmod +x canton-indexer-*
+chmod +x cinder-*
 ```
 
 ## Upgrade
 
 ```sh
-brew update && brew upgrade canton-indexer
+brew update && brew upgrade cinder
+```
+
+## Configuration
+
+`cinder` reads the first of `--config PATH`, `./cinder.toml`,
+`$XDG_CONFIG_HOME/cinder/config.toml` (`~/.config/cinder/config.toml` when
+`XDG_CONFIG_HOME` is unset). Command-line flags override environment
+variables, which override the file:
+
+```toml
+pqs_url = "postgres://user:password@localhost:5432/pqs"
 ```
 
 ## Examples
@@ -63,7 +74,7 @@ are not accepted here — the source is not public.
 
 Please include:
 
-- the version (`canton-indexer --version`)
+- the version (`cinder --version`)
 - your OS/architecture
 - how you installed it (Homebrew or a release binary)
 - the filter manifest you ran
