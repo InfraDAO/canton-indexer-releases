@@ -3,13 +3,14 @@
 # The same holdings as my-balance.toml, without the `lock` clause and selected
 # for what moved rather than what is: a create when a holding appears and an
 # archive when it is spent. Whether those two lines stay two is the sink's
-# (docs/engine.md).
+# decision (docs/engine.md).
 #
-# `event` and `at_offset` are fields the query adds to the row. `event` is the
-# only place a line can say which event it is; `at_offset` is that event's own
-# position, where `.created_at_offset` would give the create's on both lines.
+# `event` and `at_offset` read the two fields the query adds, `.event_type` and
+# `.offset`. `event` is the only place a line can say which event it is;
+# `at_offset` is that event's own position, where `.created_at_offset` would
+# give the create's on both lines.
 #
-# PQS holds only what our party is a stakeholder of.
+# Replace the party id with the one your own validator hosts.
 
 name = "holding_lifecycle"
 source = "lifecycle"

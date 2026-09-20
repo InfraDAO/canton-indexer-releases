@@ -6,6 +6,8 @@
 # token-standard instrument (docs/data-model.md, "My balance"). Locked
 # holdings exist but cannot be spent, hence `lock == null`.
 #
+# Replace the party id with the one your own validator hosts.
+#
 # The balance is the consumer's GROUP BY; v1 does not aggregate:
 #   select owner, instrument, sum(amount) from <table>
 #   where _archived_at_offset is null group by 1,2;

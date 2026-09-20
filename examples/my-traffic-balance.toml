@@ -2,14 +2,11 @@
 # and what did it cost?"
 #
 # The DSO records a running per-member total on MemberTraffic: totalPurchased
-# (bytes), amuletSpent, usdSpent, numPurchases, keyed by (memberId,
+# (bytes), amuletSpent, usdSpent, numPurchases, one contract per (memberId,
 # synchronizerId, migrationId). The live view is `_archived_at_offset is null`.
 #
-# Not Splice.Wallet.TopUpState:ValidatorTopUpState, the other candidate: its
-# payload is scheduler bookkeeping for the wallet's auto-top-up loop and
-# carries no balance. Verified on the live store.
-#
-# memberId is the participant id (PAR::<party>), not the party id.
+# memberId is the participant id (PAR::<party>), not the party id. Replace it
+# with the participant id of the party your own validator hosts.
 
 name = "my_traffic_balance"
 source = "lifecycle"

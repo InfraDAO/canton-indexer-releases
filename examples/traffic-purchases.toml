@@ -6,7 +6,7 @@
 #   select member, sum(traffic) t from <table> group by 1 order by t desc;
 #
 # `.argument.memberId != null` drops records whose argument subtree privacy
-# hid. PQS holds only what our party is a stakeholder of.
+# hid. PQS holds only the exercises our party witnesses.
 
 name = "traffic_purchases"
 source = "exercises"

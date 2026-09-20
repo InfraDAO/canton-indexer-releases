@@ -3,17 +3,18 @@
 # One document per AmuletRules_Transfer exercise. The choice is the single
 # entry point for Amulet value movement — rewards claimed, wallet transfers,
 # merges, splits — which is why the argument is a `transfer` record (sender,
-# provider, outputs, inputs) rather than a flat from/to pair: a transfer
-# consumes N holdings and creates M (testdata/pqs/transfer-exercise.json).
+# provider, inputs, outputs, beneficiaries) rather than a flat from/to pair: a
+# transfer consumes N holdings and creates M
+# (testdata/pqs/transfer-exercise.json).
 #
-# So "receiver" is a list: `outputs` is an array of {receiver, amount, lock},
-# empty when everything came back as sender change. The unspent remainder is
-# `senderChangeAmount`, and `createdAmulets`/`senderChangeAmulet` name the
-# holdings the transfer minted. Fan-out to one row per (sender, receiver) is
-# the consumer's unnest.
+# So "receiver" is a list: `outputs` is an array of
+# {receiver, amount, lock, meta, receiverFeeRatio}, empty when everything came
+# back as sender change. The unspent remainder is `senderChangeAmount`, and
+# `createdAmulets`/`senderChangeAmulet` name the holdings the transfer minted.
+# Fan-out to one row per (sender, receiver) is the consumer's unnest.
 #
 # `.argument.transfer.sender != null` drops an exercise whose argument subtree
-# privacy hid. PQS only has transfers our party is a stakeholder of.
+# privacy hid. PQS only has the transfers our party witnesses.
 
 name = "token_transfers"
 source = "exercises"
