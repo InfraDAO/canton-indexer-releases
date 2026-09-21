@@ -42,6 +42,29 @@ chmod +x cinder-*
 brew update && brew upgrade cinder
 ```
 
+## Usage
+
+Writing a filter is a loop of three commands:
+
+```sh
+# what the store holds: templates, interfaces, choices
+cinder types [--package splice-amulet] [--json]
+
+# the records a `where` selects, as a filter sees them
+cinder preview --source lifecycle|exercises [--where '<jq>'] [--range S:E|S|:E] [--limit N] [--save my-filter.toml]
+
+# a finished filter over an offset window, as NDJSON documents
+cinder run my-filter.toml [--from N] [--to M|+K]
+```
+
+`preview` writes each matching record as one NDJSON line, so the paths a
+`select` needs are there to read. `--range` takes `S:E` (inclusive), `S` to
+read from S on, or `:E` to read up to E; `--limit` defaults to 10 and `0`
+removes the cap. `--save` leaves the manifest of that preview — `name` from
+the file stem, `source`, `where` — with an empty `[select]` to fill in; an
+existing file is never overwritten, and `cinder run` refuses the manifest
+until `select` has a column.
+
 ## Configuration
 
 `cinder` reads the first of `--config PATH`, `./cinder.toml`,
