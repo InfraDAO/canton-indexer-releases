@@ -15,7 +15,7 @@
 # The archive's node sorts before the successor's create, so the newest line
 # for a validator is its live successor whenever one exists, and
 # `last_active_at` on that row is the liveness answer.
-# crates/canton-filter/tests/examples/ runs both folds.
+# crates/filter/tests/examples/ runs both folds.
 
 name = "validator_licenses"
 source = "lifecycle"
