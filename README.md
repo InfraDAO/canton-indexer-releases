@@ -65,6 +65,27 @@ the file stem, `source`, `where` — with an empty `[select]` to fill in; an
 existing file is never overwritten, and `cinder run` refuses the manifest
 until `select` has a column.
 
+## Demo
+
+`cinder types` lists what the store holds; the interface name is picked from
+its output:
+
+![cinder types](docs/demo/types.gif)
+
+`cinder preview` selects records with that name in a `where`, narrows the
+range, and writes them as JSON:
+
+![cinder preview](docs/demo/preview-where.gif)
+
+An owner from that output narrows the `where` further, and `--save` writes the
+manifest:
+
+![cinder preview --save](docs/demo/preview-save.gif)
+
+Fill in `select`, then `cinder run` emits the documents:
+
+![cinder run](docs/demo/run.gif)
+
 ## Configuration
 
 `cinder` reads the first of `--config PATH`, `./cinder.toml`,
