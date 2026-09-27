@@ -99,17 +99,28 @@ pqs_url = "postgres://user:password@localhost:5432/pqs"
 
 ## Examples
 
-[`examples/`](examples/) has filter manifests that track the latest release:
+[`docs/filter-format.md`](docs/filter-format.md) describes the manifest: its
+keys, the records a filter reads, the `where` grammar, the `select`
+expressions and the documents written.
 
-| File | What it does |
+[`examples/`](examples/) has filter manifests that track the latest release.
+Each names a DevNet party in its `where`; its header says what to replace.
+
+| File | What it emits |
 |------|---------------|
-| [`holding-lifecycle.toml`](examples/holding-lifecycle.toml) | Every create and archive of a CIP-56 token holding owned by the configured party, as a log of what moved. |
-| [`my-balance.toml`](examples/my-balance.toml) | One row per unlocked CIP-56 holding owned by the configured party — current balance per instrument. |
-| [`my-traffic-balance.toml`](examples/my-traffic-balance.toml) | Running total of synchronizer traffic purchased by a validator, and what it cost. |
-| [`report-active-calls.toml`](examples/report-active-calls.toml) | One row per validator liveness heartbeat (`ValidatorLicense_ReportActive`). |
-| [`token-transfers.toml`](examples/token-transfers.toml) | Every observable Amulet transfer, with senders, receivers and fees. |
-| [`traffic-purchases.toml`](examples/traffic-purchases.toml) | Every synchronizer traffic purchase: member, bytes bought, Amulet burned. |
-| [`validator-licenses.toml`](examples/validator-licenses.toml) | Every `ValidatorLicense` contract in its lifecycle-chain form, for folding down to one row per validator. |
+| [`ans-entries.toml`](examples/ans-entries.toml) | The ANS entries whose user is the named party, at each entry's create and at its archive. |
+| [`ans-operations.toml`](examples/ans-operations.toml) | The exercises an ANS entry goes through: the named party's requests and payments, and every expiry PQS holds. |
+| [`holding-lifecycle.toml`](examples/holding-lifecycle.toml) | The token-standard V2 (CIP-112) holdings in the named party's default account, at each holding's create and at its archive. |
+| [`my-balance.toml`](examples/my-balance.toml) | The unlocked token-standard V2 (CIP-112) holdings in the named party's default account, for a balance per instrument. |
+| [`my-traffic-balance.toml`](examples/my-traffic-balance.toml) | The `MemberTraffic` contracts of the named participant: synchronizer traffic purchased and what it cost, as running totals. |
+| [`report-active-calls.toml`](examples/report-active-calls.toml) | Each `ValidatorLicense_ReportActive` exercise, the validator liveness heartbeat. |
+| [`reward-collections.toml`](examples/reward-collections.toml) | Each `AmuletRules_Transfer` the named party sent that credited a reward, with the amount credited per reward type. |
+| [`token-standard-transfers.toml`](examples/token-standard-transfers.toml) | Each token-standard V2 (CIP-112) `EventLog_HoldingsChange` the DSO reports on the named party's default account: holdings consumed and created, and the transfer legs. |
+| [`token-transfers.toml`](examples/token-transfers.toml) | Each `AmuletRules_Transfer` exercise whose argument the party sees: sender, receivers, amounts and holding fees. |
+| [`traffic-purchases.toml`](examples/traffic-purchases.toml) | Each `AmuletRules_BuyMemberTraffic` exercise whose argument the party sees: member, traffic bought, Amulet paid. |
+| [`validator-licenses.toml`](examples/validator-licenses.toml) | Every `ValidatorLicense` contract at its create and at its archive, for folding to one row per validator. |
+| [`validator-reward-claims.toml`](examples/validator-reward-claims.toml) | The settlements of validator reward coupons: each claim by the named party, and every expiry PQS holds. |
+| [`validator-rewards.toml`](examples/validator-rewards.toml) | The validator reward coupons whose user is the named party, at each coupon's create and at its archive. |
 
 ## Issues
 
