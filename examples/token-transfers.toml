@@ -1,11 +1,11 @@
 # token-transfers — "every Amulet transfer we can see".
 #
-# One document per AmuletRules_Transfer exercise. The choice is the single
+# One document per AmuletRules_Transfer exercise whose argument privacy did
+# not hide. The choice is the single
 # entry point for Amulet value movement — rewards claimed, wallet transfers,
 # merges, splits — which is why the argument is a `transfer` record (sender,
 # provider, inputs, outputs, beneficiaries) rather than a flat from/to pair: a
-# transfer consumes N holdings and creates M
-# (testdata/pqs/transfer-exercise.json).
+# transfer consumes N holdings and creates M.
 #
 # So "receiver" is a list: `outputs` is an array of
 # {receiver, amount, lock, meta, receiverFeeRatio}, empty when everything came

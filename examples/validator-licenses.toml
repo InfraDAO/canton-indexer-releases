@@ -6,16 +6,16 @@
 # successor in the same transaction. One validator is a chain of contracts,
 # and every line of it is emitted.
 #
-# The chain is the consumer's query, one line of SQL:
+# The chain is the consumer's query, one line of SQL over `<table>`, which
+# holds the latest line per `_contract_id`:
 #
 #   live licences          select * from <table> where _archived_at_offset is null
 #   one row per validator  select distinct on (validator) * from <table>
-#                            order by validator, _offset desc
+#                            order by validator, _offset desc, _node_id desc
 #
 # The archive's node sorts before the successor's create, so the newest line
 # for a validator is its live successor whenever one exists, and
 # `last_active_at` on that row is the liveness answer.
-# crates/filter/tests/examples/ runs both folds.
 
 name = "validator_licenses"
 source = "lifecycle"

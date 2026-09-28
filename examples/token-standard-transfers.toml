@@ -1,0 +1,30 @@
+# token-standard-transfers — "every change to our holdings, as the instrument
+# admin reports it."
+#
+# One line per token-standard V2 EventLog_HoldingsChange on our DevNet party's
+# default account (`id = ""`, no provider): the holdings consumed and created,
+# and `legs`, one object per transfer leg side. `where` keeps only events the
+# DSO, Amulet's instrument admin, reports; follow another token by adding its
+# admin with `or`.
+#
+# Replace the party id with the one your own validator hosts.
+#
+# One row per leg is the consumer's unnest:
+#   select _offset, leg->>'id', leg->>'side', leg->>'instrument',
+#          (leg->>'amount')::numeric
+#   from <table>, jsonb_array_elements(legs) leg;
+# A line with `legs = []` is a merge or split, not a transfer; the unnest
+# yields no row for it.
+
+name = "token_standard_transfers"
+source = "exercises"
+version = 1
+where = '.template_fqn == "splice-api-token-transfer-events-v2:Splice.Api.Token.TransferEventsV2:EventLog" and .choice == "EventLog_HoldingsChange" and .argument.admin == "DSO::1220be58c29e65de40bf273be1dc2b266d43a9a002ea5b18955aeef7aac881bb471a" and .argument.account.owner == "infradao-devnet-1::12205b62a09e83b520e0a18097871eaaae3dac33069109965f2e217f679661e1d0c1" and .argument.account.provider == null and .argument.account.id == ""'
+
+[select]
+admin = 'party(.argument.admin)'
+owner = 'party(.argument.account.owner)'
+inputs = '.argument.inputHoldingCids'
+outputs = '.argument.outputHoldingCids'
+legs = '[.argument.transferLegSides[] | {id: .transferLegId, side, instrument: .instrumentId, amount: decimal(.amount), otherside, reason: .meta.values["splice.lfdecentralizedtrust.org/reason"]}]'
+at = 'time(.exercised_effective_at)'

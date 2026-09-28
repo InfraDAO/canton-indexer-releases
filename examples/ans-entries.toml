@@ -1,0 +1,32 @@
+# ans-entries — "which ANS names do we hold, and until when?"
+#
+# One line at the create of each AnsEntry whose user is our DevNet party, and
+# one more at its archive. A renewal archives the entry and creates its
+# successor with `expiresAt` extended, so a name is a chain of contracts. An
+# entry is live until archived; AnsEntry_Expire archives it only once past
+# its `expiresAt`, so a live entry can be past it.
+#
+# `<table>` holds the latest line per `_contract_id`. A name is held while an
+# entry of it is live and not past `expires_at`:
+#   select name, url, description, expires_at from <table>
+#   where _archived_at_offset is null and expires_at::timestamptz > now();
+# One row per name:
+#   select distinct on (name) * from <table>
+#   order by name, _offset desc, _node_id desc;
+# A renewal's archive and its successor's create share an offset, the create
+# a child of the consuming AnsEntry_Renew and so at a higher node: the newest
+# line is the successor.
+#
+# Replace the party id with the one your own validator hosts.
+
+name = "ans_entries"
+source = "lifecycle"
+version = 1
+where = '.template_fqn == "splice-amulet-name-service:Splice.Ans:AnsEntry" and .payload.user == "infradao-devnet-1::12205b62a09e83b520e0a18097871eaaae3dac33069109965f2e217f679661e1d0c1"'
+
+[select]
+name = '.payload.name'
+user = 'party(.payload.user)'
+url = '.payload.url'
+description = '.payload.description'
+expires_at = 'time(.payload.expiresAt)'

@@ -1,0 +1,46 @@
+# ans-operations — "what has been done to our ANS names?"
+#
+# One line per exercise of the ANS choices an entry goes through:
+#   AnsRules_RequestEntry                the user requests `name`, creating
+#                                        the AnsEntryContext `context_cid` and
+#                                        the SubscriptionRequest `request_cid`
+#   AnsRules_CollectInitialEntryPayment  the DSO and the user collect the first
+#                                        payment and create the AnsEntry
+#                                        `entry_cid`
+#   AnsRules_CollectEntryRenewalPayment  the DSO and the user collect a
+#                                        renewal payment before
+#                                        `previous_entry_cid` expires, which
+#                                        AnsEntry_Renew archives, creating
+#                                        `entry_cid`
+#   AnsEntry_Expire                      a signatory of the AnsEntry
+#                                        `entry_cid` archives it once past its
+#                                        `expiresAt`
+# The three AnsRules choices carry the user in their argument, and `where`
+# keeps those of our DevNet party. AnsEntry_Expire names no user, so every
+# expiry PQS holds is emitted; the join below narrows them to our entries.
+# The DSO exercises the two payment choices through AnsEntryContext choices,
+# which carry no user and are not selected.
+#
+# The entries are ans-entries.toml, whose `<ans_entries>` holds the latest
+# line per `_contract_id`:
+#   select o.choice, o.at, e.name, e.expires_at
+#   from <ans_operations> o
+#   join <ans_entries> e on e._contract_id = o.entry_cid;
+# A request precedes any entry; its `name` is on its own line.
+#
+# Replace the party id with the one your own validator hosts.
+
+name = "ans_operations"
+source = "exercises"
+version = 1
+where = '(.template_fqn == "splice-amulet-name-service:Splice.Ans:AnsRules" and (.choice == "AnsRules_RequestEntry" or .choice == "AnsRules_CollectInitialEntryPayment" or .choice == "AnsRules_CollectEntryRenewalPayment") and .argument.user == "infradao-devnet-1::12205b62a09e83b520e0a18097871eaaae3dac33069109965f2e217f679661e1d0c1") or (.template_fqn == "splice-amulet-name-service:Splice.Ans:AnsEntry" and .choice == "AnsEntry_Expire")'
+
+[select]
+choice = '.choice'
+name = '.argument.name'
+entry_cid = 'if .choice == "AnsEntry_Expire" then .contract_id elif .choice == "AnsRules_RequestEntry" then null else .result.entryCid end'
+previous_entry_cid = '.argument.entryCid'
+context_cid = 'if .choice == "AnsRules_RequestEntry" then .result.entryCid else .argument.entryContext end'
+request_cid = '.result.requestCid'
+subscription_state_cid = '.result.subscriptionStateCid'
+at = 'time(.exercised_effective_at)'

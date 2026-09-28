@@ -1,15 +1,17 @@
 # my-balance — "how much of each token do we hold, right now?"
 #
-# One line per unlocked CIP-56 Holding owned by our DevNet party. Naming the
-# `splice-api-token-holding-v1` interface rather than `Splice.Amulet:Amulet`
-# gets the standard's normalized payload, so this works for every
-# token-standard instrument (docs/data-model.md, "My balance"). Locked
-# holdings exist but cannot be spent, hence `lock == null`.
+# One line per unlocked token-standard V2 Holding in our DevNet party's default
+# account (`id = ""`, no provider), at its create and again at its archive.
+# The `splice-api-token-holding-v2` interface view carries the same shape for
+# every token-standard instrument. A locked holding cannot be spent, hence
+# `lock == null`.
 #
 # Replace the party id with the one your own validator hosts.
 #
-# The balance is the consumer's GROUP BY; v1 does not aggregate:
-#   select owner, instrument, sum(amount) from <table>
+# An instrument is its admin and its id, so the balance is the consumer's
+# GROUP BY on both, over `<table>`, which holds the latest line per
+# `_contract_id`:
+#   select admin, instrument, sum(amount::numeric) from <table>
 #   where _archived_at_offset is null group by 1,2;
 # Amulet holdings decay with holding fees, so that sum is an upper bound
 # without the current open round (Scan data).
@@ -17,10 +19,10 @@
 name = "my_balance"
 source = "lifecycle"
 version = 1
-where = '.template_fqn == "splice-api-token-holding-v1:Splice.Api.Token.HoldingV1:Holding" and .payload_type == "interface" and .payload.owner == "infradao-devnet-1::12205b62a09e83b520e0a18097871eaaae3dac33069109965f2e217f679661e1d0c1" and .payload.lock == null'
+where = '.template_fqn == "splice-api-token-holding-v2:Splice.Api.Token.HoldingV2:Holding" and .payload_type == "interface" and .payload.account.owner == "infradao-devnet-1::12205b62a09e83b520e0a18097871eaaae3dac33069109965f2e217f679661e1d0c1" and .payload.account.provider == null and .payload.account.id == "" and .payload.lock == null'
 
 [select]
-owner = 'party(.payload.owner)'
+owner = 'party(.payload.account.owner)'
 instrument = '.payload.instrumentId.id'
 admin = 'party(.payload.instrumentId.admin)'
 amount = 'decimal(.payload.amount)'

@@ -1,6 +1,7 @@
 # traffic-purchases — "who bought more traffic balance?"
 #
-# One document per AmuletRules_BuyMemberTraffic exercise: the member topped up,
+# One document per AmuletRules_BuyMemberTraffic exercise whose argument
+# privacy did not hide: the member topped up,
 # the bytes bought and the Amulet burned to pay for it. Ranking is the
 # consumer's:
 #   select member, sum(traffic) t from <table> group by 1 order by t desc;

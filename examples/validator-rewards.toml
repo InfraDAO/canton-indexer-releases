@@ -1,0 +1,35 @@
+# validator-rewards — "which validator reward coupons did our fees generate,
+# and which are still live?"
+#
+# One line at the create of each ValidatorRewardCoupon whose user is our
+# DevNet party, and one more at its archive. A coupon's `user` is the party
+# whose fee generated it, so this filter holds the coupons of our own fees; a
+# validator following the coupons of the users it hosts names those users or
+# leaves the `.payload.user` clause out. `burn` is the fee the coupon records.
+# The AmuletRules_Transfer that claims a coupon carries the amount credited,
+# `burn` times the issuing round's issuancePerValidatorRewardCoupon, in
+# `result.summary.inputValidatorRewardAmount`, summed with the transfer's
+# other validator reward and faucet inputs: reward-collections.toml.
+#
+# A coupon is live until archived. A claim needs the coupon round's
+# IssuingMiningRound, which closing the round archives; a live coupon of a
+# closed round can no longer be claimed, and the DSO can expire it.
+#
+# `<table>` holds the latest line per `_contract_id`. The burn of the live
+# coupons per round, closed rounds included, is the consumer's GROUP BY:
+#   select round, sum(burn::numeric) from <table>
+#   where _archived_at_offset is null group by 1;
+# Whether an archived coupon was claimed or expired is
+# validator-reward-claims.toml.
+#
+# Replace the party id with the one your own validator hosts.
+
+name = "validator_rewards"
+source = "lifecycle"
+version = 1
+where = '.template_fqn == "splice-amulet:Splice.Amulet:ValidatorRewardCoupon" and .payload.user == "infradao-devnet-1::12205b62a09e83b520e0a18097871eaaae3dac33069109965f2e217f679661e1d0c1"'
+
+[select]
+user = 'party(.payload.user)'
+round = 'int(.payload.round.number)'
+burn = 'decimal(.payload.amount)'

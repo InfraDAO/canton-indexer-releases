@@ -1,25 +1,22 @@
 # holding-lifecycle — "every birth and every spend of our holdings, as a log."
 #
-# The same holdings as my-balance.toml, without the `lock` clause and selected
-# for what moved rather than what is: a create when a holding appears and an
-# archive when it is spent. Whether those two lines stay two is the sink's
-# decision (docs/engine.md).
+# The holdings of my-balance.toml, locked ones included: one line when a
+# holding is created and one when it is archived. Whether those two lines stay
+# two is the consumer's: both carry the holding's `_contract_id`.
 #
-# `event` and `at_offset` read the two fields the query adds, `.event_type` and
-# `.offset`. `event` is the only place a line can say which event it is;
-# `at_offset` is that event's own position, where `.created_at_offset` would
-# give the create's on both lines.
+# `event` is `.event_type`, the event the line is; `at_offset` is `.offset`,
+# that event's own position.
 #
 # Replace the party id with the one your own validator hosts.
 
 name = "holding_lifecycle"
 source = "lifecycle"
 version = 1
-where = '.template_fqn == "splice-api-token-holding-v1:Splice.Api.Token.HoldingV1:Holding" and .payload_type == "interface" and .payload.owner == "infradao-devnet-1::12205b62a09e83b520e0a18097871eaaae3dac33069109965f2e217f679661e1d0c1"'
+where = '.template_fqn == "splice-api-token-holding-v2:Splice.Api.Token.HoldingV2:Holding" and .payload_type == "interface" and .payload.account.owner == "infradao-devnet-1::12205b62a09e83b520e0a18097871eaaae3dac33069109965f2e217f679661e1d0c1" and .payload.account.provider == null and .payload.account.id == ""'
 
 [select]
 event = '.event_type'
 at_offset = 'int(.offset)'
-owner = 'party(.payload.owner)'
+owner = 'party(.payload.account.owner)'
 instrument = '.payload.instrumentId.id'
 amount = 'decimal(.payload.amount)'

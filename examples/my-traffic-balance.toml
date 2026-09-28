@@ -3,10 +3,11 @@
 #
 # The DSO records a running per-member total on MemberTraffic: totalPurchased
 # (bytes), amuletSpent, usdSpent, numPurchases, one contract per (memberId,
-# synchronizerId, migrationId). The live view is `_archived_at_offset is null`.
+# synchronizerId, migrationId). `<table>` holds the latest line per
+# `_contract_id`; the live view is `_archived_at_offset is null` over it.
 #
-# memberId is the participant id (PAR::<party>), not the party id. Replace it
-# with the participant id of the party your own validator hosts.
+# memberId is a participant id (PAR::…), not a party id. Replace it with the
+# participant id of your own validator.
 
 name = "my_traffic_balance"
 source = "lifecycle"

@@ -1,0 +1,38 @@
+# validator-reward-claims — "which of our validator reward coupons were
+# claimed, and which expired?"
+#
+# A settlement archives a ValidatorRewardCoupon by one of two choices. A claim
+# is ValidatorRewardCoupon_ArchiveAsValidator: `validator` is the party that
+# claimed, the sender of the AmuletRules_Transfer that exercises it. An expiry
+# is ValidatorRewardCoupon_DsoExpire: the DSO alone controls it, and
+# `closed_round_cid` is the id of the ClosedMiningRound of the coupon's round
+# it requires.
+#
+# One line per settlement: each claim by our DevNet party, and each expiry
+# PQS holds, since an expiry names no party in its argument or result. The
+# join below narrows the expiries to our coupons.
+#
+# A coupon's party is its `user`, whose fee generated it; a claim's is its
+# `validator`, which holds a ValidatorRight for that user; the two can
+# differ. The coupon's round, burn and liveness are on its line in
+# validator-rewards.toml, whose `<validator_rewards>` holds the latest line
+# per `_contract_id`:
+#   select r._contract_id, r.round, r.burn, r._archived_at_offset, c.choice
+#   from <validator_rewards> r
+#   left join <validator_reward_claims> c using (_contract_id);
+# A coupon is live while `r._archived_at_offset` is null. An archived coupon
+# with a null `choice` was archived by the built-in Archive, or claimed by
+# another validator, or settled past the last offset this filter's run read.
+#
+# Replace the party id with the one your own validator hosts.
+
+name = "validator_reward_claims"
+source = "exercises"
+version = 1
+where = '.template_fqn == "splice-amulet:Splice.Amulet:ValidatorRewardCoupon" and ((.choice == "ValidatorRewardCoupon_ArchiveAsValidator" and .argument.validator == "infradao-devnet-1::12205b62a09e83b520e0a18097871eaaae3dac33069109965f2e217f679661e1d0c1") or .choice == "ValidatorRewardCoupon_DsoExpire")'
+
+[select]
+choice = '.choice'
+validator = '.argument.validator'
+closed_round_cid = '.argument.closedRoundCid'
+at = 'time(.exercised_effective_at)'

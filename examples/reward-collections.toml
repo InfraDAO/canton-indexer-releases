@@ -1,0 +1,50 @@
+# reward-collections — "which rewards did we collect, and what did each
+# transfer credit?"
+#
+# One line per AmuletRules_Transfer our DevNet party sent that credited a
+# reward. A transfer credits its inputs to its sender, and its result's
+# summary holds the amount credited per reward type, which the columns hold.
+# `validator_reward` includes `validator_faucet`. An optional amount the
+# summary leaves null is "0", as the Daml's own mint total reads it.
+#
+# `where` keeps a transfer whose `result.meta` carries a reward key; the Daml
+# writes each key only for a nonzero amount, so a transfer that credited no
+# reward, and a result with no `meta`, are dropped.
+# `.argument.transfer.sender == <party>` also drops an exercise whose argument
+# privacy hid.
+#
+# token-transfers.toml lists every transfer we witness by who sent what to
+# whom; this lists the transfers we sent that collected a reward, by what each
+# reward type credited.
+#
+# A transfer is identified by `(_offset, _node_id)`; its `_contract_id` is the
+# AmuletRules contract every transfer exercises. `inputs` holds each input's
+# `tag` and `contract_id`; the validator reward coupons a transfer collected
+# are the consumer's join with validator-rewards.toml, whose
+# `<validator_rewards>` holds the latest line per `_contract_id`:
+#   select c._offset, c._node_id, i->>'contract_id' as coupon, c.validator_reward
+#   from <reward_collections> c
+#   cross join lateral jsonb_array_elements(c.inputs::jsonb) i
+#   join <validator_rewards> r on r._contract_id = i->>'contract_id'
+#   where i->>'tag' = 'InputValidatorRewardCoupon';
+# `validator_reward` is the transfer's, summed over all its validator reward
+# inputs.
+#
+# Replace the party id with the one your own validator hosts.
+
+name = "reward_collections"
+source = "exercises"
+version = 1
+where = '.template_fqn == "splice-amulet:Splice.AmuletRules:AmuletRules" and .choice == "AmuletRules_Transfer" and .argument.transfer.sender == "infradao-devnet-1::12205b62a09e83b520e0a18097871eaaae3dac33069109965f2e217f679661e1d0c1" and (.result.meta.values["amulet.splice.lfdecentralizedtrust.org/validator-rewards"] != null or .result.meta.values["amulet.splice.lfdecentralizedtrust.org/app-rewards"] != null or .result.meta.values["amulet.splice.lfdecentralizedtrust.org/sv-rewards"] != null or .result.meta.values["amulet.splice.lfdecentralizedtrust.org/unclaimed-activity-records"] != null or .result.meta.values["amulet.splice.lfdecentralizedtrust.org/development-fund"] != null)'
+
+[select]
+sender = 'party(.argument.transfer.sender)'
+inputs = '[.argument.transfer.inputs[]? | {tag, contract_id: (.value | if type == "string" then . else .optInputValidatorFaucetCoupon end)}]'
+validator_reward = 'decimal(.result.summary.inputValidatorRewardAmount)'
+validator_faucet = 'decimal(one_of(.result.summary.inputValidatorFaucetAmount, "0"))'
+app_reward = 'decimal(.result.summary.inputAppRewardAmount)'
+sv_reward = 'decimal(.result.summary.inputSvRewardAmount)'
+unclaimed_activity_record = 'decimal(one_of(.result.summary.inputUnclaimedActivityRecordAmount, "0"))'
+development_fund = 'decimal(one_of(.result.summary.inputDevelopmentFundAmount, "0"))'
+round = 'int(.result.round.number)'
+at = 'time(.exercised_effective_at)'
