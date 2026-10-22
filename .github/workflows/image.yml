@@ -1,0 +1,70 @@
+name: Image
+
+# Publishes the canton-indexer server image as this repository's package,
+# ghcr.io/infradao/canton-indexer-releases/canton-indexer. The image is built
+# in InfraDAO/canton-indexer as ghcr.io/infradao/canton-indexer:<tag>. Each
+# run copies, unchanged, every release of this repository whose image is built
+# there and not yet here, from v0.10.0, the first release of the server, on:
+# version tags only, no `latest`. Pushing with this
+# repository's token is what makes the package this repository's; reading the
+# private image needs this repository granted Read on that package (Manage
+# Actions access). A release whose image is not built yet is picked up by a
+# later run.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  copy:
+    name: Publish the server image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SOURCE: ghcr.io/infradao/canton-indexer
+      TARGET: ghcr.io/infradao/canton-indexer-releases/canton-indexer
+    steps:
+      # Plain docker commands, no third-party actions: this repository allows
+      # only InfraDAO actions. The hosted runner ships docker with buildx.
+      - name: Log in to ghcr.io
+        env:
+          TOKEN: ${{ github.token }}
+        run: echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      - name: Copy the releases this package lacks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          tags=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '.[].tagName' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)
+          for tag in $tags; do
+            # v0.10.0 is the first release of the server.
+            if [ "$(printf '%s\n' v0.10.0 "$tag" | sort -V | head -1)" != v0.10.0 ]; then
+              continue
+            fi
+            if docker buildx imagetools inspect "$TARGET:$tag" >/dev/null 2>&1; then
+              continue
+            fi
+            if ! docker buildx imagetools inspect "$SOURCE:$tag" >/dev/null 2>&1; then
+              echo "$tag: no image in $SOURCE yet (or no read access); a later run retries"
+              continue
+            fi
+            echo "$tag: copying"
+            # The first push into a new package can be refused while the push
+            # that creates it lands; one retry covers it.
+            copy() {
+              docker buildx imagetools create \
+                --annotation "index:org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+                --tag "$TARGET:$tag" "$SOURCE:$tag"
+            }
+            copy || { sleep 15; copy; }
+          done

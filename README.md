@@ -6,8 +6,9 @@ manifests (TOML, with a jq-style `where`/`select`), and writes the matching
 ledger records as application-ready documents — the tool for authoring
 filters and exploring what a validator holds.
 
-This repository is the public home of the `cinder` binary: releases, issues
-and example filters. The source lives in a private repository.
+This repository is the public home of the `cinder` binary and the
+`canton-indexer` server image: releases, issues and example filters. The
+source lives in a private repository.
 
 ## Install
 
@@ -65,6 +66,18 @@ the file stem, `source`, `where` — with an empty `[select]` to fill in; an
 existing file is never overwritten, and `cinder run` refuses the manifest
 until `select` has a column.
 
+With a server running ([Server image](#server-image)), `cinder` deploys
+filters to it and reads them back:
+
+```sh
+# register a filter, or replace it with --replace
+cinder deploy my-filter.toml [--replace]
+
+# the server's filters, and one in detail
+cinder ls [--json]
+cinder info <name> [--json]
+```
+
 ## Demo
 
 `cinder types` lists what the store holds; the interface name is picked from
@@ -95,7 +108,45 @@ variables, which override the file:
 
 ```toml
 pqs_url = "postgres://user:password@localhost:5432/pqs"
+node = "http://127.0.0.1:8020"   # the server, for deploy, ls and info
 ```
+
+## Server image
+
+`canton-indexer`, the indexer node, ships as this repository's multi-arch image
+(`linux/amd64`, `linux/arm64`): alpine with the static binary. Each release is
+tagged `vX.Y.Z`, with no `latest` tag: pin the release you run.
+
+```sh
+docker pull ghcr.io/infradao/canton-indexer-releases/canton-indexer:vX.Y.Z
+```
+
+The node is configured through the environment. It needs its own Postgres
+store (`DB_*`) and the validator's PQS (`PQS_URL`):
+
+```sh
+docker run --rm \
+  -e DB_HOST=… -e DB_PORT=5432 -e DB_USER=indexer -e DB_PASSWORD=… -e DB_NAME=indexer \
+  -e PQS_URL="postgres://user:password@host:5432/pqs" \
+  -e NO_AUTH_GRPC_ADDR=0.0.0.0:8020 \
+  -p 8020:8020 -p 9464:9464 \
+  ghcr.io/infradao/canton-indexer-releases/canton-indexer:vX.Y.Z
+```
+
+- `NO_AUTH_GRPC_ADDR` is the address of the gRPC management service, which
+  registers and lists filters. It defaults to `127.0.0.1:8020`, which a published container port
+  cannot reach, so inside a container it is set to `0.0.0.0:8020`.
+  **The gRPC service has no authentication: keep port 8020 on a private
+  network, never on a public interface.**
+- Prometheus metrics are served on port `9464` at `/metrics`
+  (`METRICS_ADDR`, default `0.0.0.0:9464`).
+- `DB_NAME` defaults to `DB_USER`; `DB_PASSWORD` defaults to `indexer`, so set
+  it.
+
+Every setting, with its environment variable, flag, default and description,
+is in `canton-indexer-config.md`, attached to each release: the
+[latest release's](../../releases/latest/download/canton-indexer-config.md),
+or under that release's assets on the [Releases page](../../releases).
 
 ## Examples
 
