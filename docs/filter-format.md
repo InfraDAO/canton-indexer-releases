@@ -73,12 +73,12 @@ Tips:
 | `source`       | yes      | `"lifecycle"` or `"exercises"`                         |          |
 | `version`      | yes      | `1`                                                    |          |
 | `where`        | no       | An expression in the `where` grammar. Read the warning there before you leave it out of a `lifecycle` filter. | `'true'` |
-| `[select]`     | yes      | `column = 'expression'`, at least one, and no column name starts with `_` | |
+| `[select]`     | yes      | `column = 'expression'` or `column = { expr, queryable, type }` (see [Queryable columns](#queryable-columns)), at least one; no column name is blank or starts with `_` | |
 | `on_error`     | no       | `"halt"` or `"skip"`                                   | `"halt"` |
 | `start_offset` | no       | The offset where the indexer service starts a filter that has not committed anything yet. The service is not part of the published `cinder`, and `cinder run` does not read this key: use `--from`. | the oldest |
 
 Any other top-level key in the file makes the load fail. This page describes version 1 as
-cinder 0.8.0 reads it. While cinder is on 0.x, a release may change what
+cinder 0.10.0 reads it. While cinder is on 0.x, a release may change what
 version 1 accepts.
 
 ## Records
@@ -291,6 +291,69 @@ The engine does not limit time or memory. `[range(1e9)]` runs out of memory,
 and `fromjson` over text nested 20,000 deep overflows the stack. Either one
 ends the whole `cinder` process, and `on_error` does not see it.
 
+## Queryable columns
+
+A column written as a table can be marked **queryable**, a column a document
+query may filter on:
+
+```toml
+[select]
+owner  = 'party(.payload.owner)'
+holder = { expr = 'party(.payload.owner)', queryable = true }
+amount = { expr = 'decimal(.payload.amount)', queryable = true, type = "numeric" }
+at     = { expr = 'time(.created_effective_at)', queryable = true, type = "time" }
+```
+
+| key         | required | value                                                    | default  |
+|-------------|----------|----------------------------------------------------------|----------|
+| `expr`      | yes      | An expression, as in the plain form                      |          |
+| `queryable` | no       | `true` or `false`                                        | `false`  |
+| `type`      | no       | `"numeric"`, `"time"` or `"text"`. Only with `queryable = true`. | `"text"` |
+
+Any other key makes the load fail. A table with neither `queryable` nor
+`type` is the same column as the plain form.
+
+`cinder run` checks `queryable` and `type` when it loads the manifest and
+otherwise ignores them: a queryable column is written to the document like
+any other, and no index is built.
+
+`type` has to match the outermost operation of `expr`:
+
+| outermost operation of `expr`                                 | `type`      |
+|---------------------------------------------------------------|-------------|
+| `decimal(…)`, `int(…)`                                        | `"numeric"` |
+| `time(…)`                                                     | `"time"`    |
+| anything else: `party(…)`, `.a`, `decimal(.a) // "0"` (its outermost operation is `//`) | `"text"` |
+
+A `type` that does not match makes the load fail, and the error names the one
+that does, or asks for an `expr` whose outermost operation produces the
+declared `type`. So `{ expr = 'decimal(.a)', queryable = true }` fails: without
+`type` it is `"text"`.
+
+A default goes inside the coercion: `decimal(.a // "0")` is `"numeric"`. In
+`decimal(.a) // "0"` the default never applies, because `decimal(null)` raises.
+
+The indexer service, which is not part of the published `cinder`, indexes
+each queryable column as `query_<position>_<label>`:
+`<position>` is the column's 0-based position in `[select]`, and `<label>`
+is its name with `A-Z` lowercased and every other character outside
+`[a-z0-9_]` as `_`, the index name cut to 63 bytes. `lastActiveAt` at
+position 1 is `query_1_lastactiveat`. A `"numeric"` index holds the number,
+a `"time"` index the text `time()` prints, and a `"text"` index the column's
+first 512 characters.
+
+A number from `int()`, or from `decimal()` over a Daml `Numeric` or `Int64`,
+fits in an index entry. `decimal()` over a `Text` field that holds a long
+digit string, or an exponent such as `1e-20000`, may not: a number past
+16383 digits after the point or 131072 before it fails the cast, and one
+whose digits do not compress fails the index entry past about 5370
+significant digits. Either fails the service's write and halts the filter,
+whatever `on_error` says.
+
+Each queryable column costs disk and insert time. On a `lifecycle` filter,
+any queryable column also makes every archive write new entries in all of
+the table's indexes. Mark only the columns queries filter on.
+
 ## Documents
 
 `cinder run` writes one JSON line for each record that `where` keeps, unless
@@ -326,7 +389,7 @@ ValidatorLicense contract (ids shortened):
 
 | What fails | When                                                                     | What happens                     |
 |------------|--------------------------------------------------------------------------|----------------------------------|
-| the load   | The TOML is invalid. A key of the file is missing, unknown or has the wrong type. A value is not one the keys table allows. The `where` is outside the grammar. A column does not compile or uses something refused. | The error names what failed. |
+| the load   | The TOML is invalid. A key of the file is missing, unknown or has the wrong type. A value is not one the keys table allows. The `where` is outside the grammar. A column does not compile or uses something refused. A column has a `type` without `queryable = true`, a `type` that does not match its expression, or no `type` where its expression needs one. | The error names what failed. |
 | a record   | An expression raises, `where` included: a coercion refuses its input, `error` is called, or `.a.b` is read where `.a` is a string. A column yields no value, or more than one. A value is not JSON (`1 / 0`, an object key that is not a string). | `on_error` decides. |
 | the run    | PQS fails, or a record has a `contract_id` or `template_fqn` that is missing, empty or not a string. | The run stops, whatever `on_error` says. |
 
